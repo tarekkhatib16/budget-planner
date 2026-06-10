@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 import type { WeekSummary } from '../api/types';
 import { formatDayShort, formatRange } from '../utils/dates';
 import { formatPence } from '../utils/money';
@@ -9,15 +11,26 @@ interface Props {
 }
 
 export function WeekCard({ week, isCurrent, onDeleteExpense }: Props) {
+  const [expanded, setExpanded] = useState(false);
+  const hasExpenses = week.expenses.length > 0;
+
   return (
     <section className={isCurrent ? 'week-card current' : 'week-card'}>
-      <header className="week-card-header">
+      <button
+        type="button"
+        className="week-card-header"
+        aria-expanded={expanded}
+        disabled={!hasExpenses}
+        onClick={() => setExpanded(!expanded)}
+      >
         <h2>
+          {hasExpenses && <span className={expanded ? 'chevron open' : 'chevron'}>›</span>}
           Week {week.index}
           <span className="week-range"> · {formatRange(week.start, week.end)}</span>
+          {hasExpenses && <span className="week-count">{week.expenses.length}</span>}
         </h2>
         <span className="week-allowance">{formatPence(week.allowance_pence)}</span>
-      </header>
+      </button>
       <div className="week-stats">
         <span>
           Spent <strong>{formatPence(week.spent_pence)}</strong>
@@ -27,7 +40,7 @@ export function WeekCard({ week, isCurrent, onDeleteExpense }: Props) {
           <strong>{formatPence(Math.abs(week.saved_pence))}</strong>
         </span>
       </div>
-      {week.expenses.length > 0 && (
+      {expanded && hasExpenses && (
         <ul className="expense-list">
           {week.expenses.map((expense) => (
             <li key={expense.id}>
