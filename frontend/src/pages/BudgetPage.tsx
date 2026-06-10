@@ -11,7 +11,7 @@ import { useAsync } from '../hooks/useAsync';
 import { MONTHS_SHORT } from '../utils/dates';
 import { formatPence } from '../utils/money';
 
-const GROUP_ORDER: CategoryGroup[] = ['income', 'bills', 'spending', 'holiday', 'debt'];
+const GROUP_ORDER: CategoryGroup[] = ['income', 'bills', 'spending', 'holiday'];
 
 function clampMonth(value: number): number {
   return Math.min(12, Math.max(1, value));
