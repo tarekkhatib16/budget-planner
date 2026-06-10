@@ -21,7 +21,7 @@ function addMonths(ref: MonthRef, delta: number): MonthRef {
 }
 
 function monthLabel(ref: MonthRef): string {
-  return `${MONTHS_SHORT[ref.month - 1]} ’${String(ref.year).slice(-2)}`;
+  return `${MONTHS_SHORT[ref.month - 1]} ${String(ref.year).slice(-2)}`;
 }
 
 export function BudgetPage() {
