@@ -17,22 +17,25 @@ GROUP_ORDER = (
 
 
 class BudgetService:
-    def __init__(self, categories: CategoryRepository, budgets: BudgetRepository) -> None:
+    def __init__(
+        self, categories: CategoryRepository, budgets: BudgetRepository, user_id: int
+    ) -> None:
         self._categories = categories
         self._budgets = budgets
+        self._user_id = user_id
 
     def set_amount(
         self, category_id: int, year: int, month: int, amount_pence: int
     ) -> BudgetEntry:
-        if self._categories.get(category_id) is None:
+        if self._categories.get(self._user_id, category_id) is None:
             raise NotFoundError(f"Category {category_id} not found")
-        return self._budgets.upsert(category_id, year, month, amount_pence)
+        return self._budgets.upsert(self._user_id, category_id, year, month, amount_pence)
 
     def get_year_view(self, year: int) -> YearView:
-        categories = self._categories.list_all()
+        categories = self._categories.list_all(self._user_id)
         amounts = {
             (entry.category_id, entry.month): entry.amount_pence
-            for entry in self._budgets.list_for_year(year)
+            for entry in self._budgets.list_for_year(self._user_id, year)
         }
 
         sections = []

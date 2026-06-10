@@ -1,6 +1,6 @@
 from datetime import date
 
-from sqlalchemy import Date, String
+from sqlalchemy import Date, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from database.base import Base
@@ -12,6 +12,9 @@ class Expense(Base):
     __tablename__ = "expenses"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
     spend_date: Mapped[date] = mapped_column(Date, index=True)
     amount_pence: Mapped[int]
     description: Mapped[str | None] = mapped_column(String(255), default=None)

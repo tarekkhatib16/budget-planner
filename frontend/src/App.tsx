@@ -1,5 +1,7 @@
 import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 
+import { useAuth } from './auth/AuthContext';
+import { LoginPage } from './pages/LoginPage';
 import { MonthPage } from './pages/MonthPage';
 import { YearPage } from './pages/YearPage';
 
@@ -10,6 +12,14 @@ function currentMonthPath(): string {
 
 export default function App() {
   const { pathname } = useLocation();
+  const { user, initializing, logout } = useAuth();
+
+  if (initializing) {
+    return null; // checking the stored token; avoid a login-page flash
+  }
+  if (!user) {
+    return <LoginPage />;
+  }
 
   return (
     <div className="app">
@@ -34,6 +44,9 @@ export default function App() {
         >
           Tracker
         </Link>
+        <button type="button" className="tab tab-signout" onClick={logout}>
+          Sign out
+        </button>
       </nav>
     </div>
   );

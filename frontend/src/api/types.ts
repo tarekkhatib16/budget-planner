@@ -1,6 +1,11 @@
 // Mirrors the backend's Pydantic schemas (api/schemas/*). All money values
 // are integer pence.
 
+export interface User {
+  id: number;
+  email: string;
+}
+
 export type CategoryGroup = 'income' | 'bills' | 'spending' | 'holiday' | 'debt';
 
 export interface Category {

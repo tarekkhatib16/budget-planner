@@ -1,31 +1,35 @@
-"""End-to-end flow through the HTTP API: categories -> budget -> expenses -> views."""
+"""End-to-end flow through the HTTP API as an authenticated user.
+
+The `client` fixture is a freshly registered account, so the default
+spreadsheet categories (Salary, Groceries, ...) already exist.
+"""
 
 
-def _create_category(client, name, group, sort_order=0):
-    response = client.post(
-        "/api/v1/categories",
-        json={"name": name, "group": group, "sort_order": sort_order},
-    )
-    assert response.status_code == 201, response.text
-    return response.json()
+def _category_id(client, name):
+    categories = client.get("/api/v1/categories").json()
+    return next(c["id"] for c in categories if c["name"] == name)
 
 
 def test_duplicate_category_in_same_group_conflicts(client):
-    _create_category(client, "Groceries", "spending")
     response = client.post(
         "/api/v1/categories", json={"name": "Groceries", "group": "spending"}
     )
     assert response.status_code == 409
 
 
-def test_year_view_computes_group_totals_and_savings(client):
-    salary = _create_category(client, "Salary", "income")
-    mortgage = _create_category(client, "Mortgage", "bills")
-    groceries = _create_category(client, "Groceries", "spending")
+def test_create_category_in_new_group_succeeds(client):
+    response = client.post(
+        "/api/v1/categories", json={"name": "Coffee Fund", "group": "spending"}
+    )
+    assert response.status_code == 201
+    assert response.json()["name"] == "Coffee Fund"
 
-    for category, amount in [(salary, 412_000), (mortgage, 198_300), (groceries, 40_000)]:
+
+def test_year_view_computes_group_totals_and_savings(client):
+    cells = [("Salary", 412_000), ("Mortgage", 198_300), ("Groceries", 40_000)]
+    for name, amount in cells:
         response = client.put(
-            f"/api/v1/budgets/2026/6/categories/{category['id']}",
+            f"/api/v1/budgets/2026/6/categories/{_category_id(client, name)}",
             json={"amount_pence": amount},
         )
         assert response.status_code == 200, response.text
@@ -42,9 +46,8 @@ def test_year_view_computes_group_totals_and_savings(client):
 
 
 def test_month_summary_spreads_budget_and_buckets_expenses(client):
-    groceries = _create_category(client, "Groceries", "spending")
     client.put(
-        f"/api/v1/budgets/2026/6/categories/{groceries['id']}",
+        f"/api/v1/budgets/2026/6/categories/{_category_id(client, 'Groceries')}",
         json={"amount_pence": 80_000},
     )
 
@@ -67,14 +70,15 @@ def test_month_summary_spreads_budget_and_buckets_expenses(client):
 
 
 def test_updating_a_budget_cell_overwrites_it(client):
-    groceries = _create_category(client, "Groceries", "spending")
-    url = f"/api/v1/budgets/2026/6/categories/{groceries['id']}"
+    groceries_id = _category_id(client, "Groceries")
+    url = f"/api/v1/budgets/2026/6/categories/{groceries_id}"
     client.put(url, json={"amount_pence": 10_000})
     client.put(url, json={"amount_pence": 25_000})
 
     view = client.get("/api/v1/budgets/2026").json()
     spending = next(s for s in view["sections"] if s["group"] == "spending")
-    assert spending["rows"][0]["amounts_pence"][5] == 25_000
+    groceries_row = next(r for r in spending["rows"] if r["category_id"] == groceries_id)
+    assert groceries_row["amounts_pence"][5] == 25_000
 
 
 def test_missing_resources_return_404(client):

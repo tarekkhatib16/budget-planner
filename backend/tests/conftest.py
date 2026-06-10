@@ -11,8 +11,8 @@ from database.base import Base
 
 
 @pytest.fixture()
-def client():
-    """App wired to a fresh in-memory SQLite database per test."""
+def anon_client():
+    """App wired to a fresh in-memory SQLite database, no user logged in."""
     engine = create_engine(
         "sqlite://",
         connect_args={"check_same_thread": False},
@@ -37,3 +37,21 @@ def client():
     with TestClient(app) as test_client:
         yield test_client
     engine.dispose()
+
+
+def register_user(client: TestClient, email: str = "test@example.com") -> str:
+    """Register an account and return its bearer token."""
+    response = client.post(
+        "/api/v1/auth/register", json={"email": email, "password": "a-secure-pw"}
+    )
+    assert response.status_code == 201, response.text
+    return response.json()["token"]
+
+
+@pytest.fixture()
+def client(anon_client):
+    """Client authenticated as a freshly registered user (who therefore has
+    the default category set)."""
+    token = register_user(anon_client)
+    anon_client.headers["Authorization"] = f"Bearer {token}"
+    return anon_client

@@ -1,6 +1,8 @@
 // Thin fetch wrapper. Paths are relative ("/api/v1/...") so the Vite dev
 // server proxies to FastAPI in development and the same origin can serve
 // both in production.
+import { getToken } from '../auth/token';
+
 const BASE = '/api/v1';
 
 export class ApiError extends Error {
@@ -13,11 +15,26 @@ export class ApiError extends Error {
   }
 }
 
+// Lets the auth layer react to any 401 (expired/revoked token) by logging
+// out, without the API modules knowing auth state exists.
+let onUnauthorized: (() => void) | null = null;
+
+export function setUnauthorizedHandler(handler: (() => void) | null): void {
+  onUnauthorized = handler;
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const token = getToken();
   const response = await fetch(`${BASE}${path}`, {
-    headers: init?.body ? { 'Content-Type': 'application/json' } : undefined,
+    headers: {
+      ...(init?.body ? { 'Content-Type': 'application/json' } : {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
     ...init,
   });
+  if (response.status === 401 && token) {
+    onUnauthorized?.();
+  }
   if (!response.ok) {
     let detail = response.statusText;
     try {

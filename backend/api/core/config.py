@@ -26,6 +26,16 @@ class Settings:
     cors_origins: list[str] = field(
         default_factory=lambda: _csv_env("CORS_ORIGINS", "http://localhost:5173")
     )
+    # Signs JWTs — anyone who knows it can forge logins. The default is for
+    # local development only; always set SECRET_KEY in production.
+    secret_key: str = field(
+        default_factory=lambda: os.getenv(
+            "SECRET_KEY", "insecure-dev-only-secret-change-in-production"
+        )
+    )
+    access_token_expire_days: int = field(
+        default_factory=lambda: int(os.getenv("ACCESS_TOKEN_EXPIRE_DAYS", "30"))
+    )
 
 
 @lru_cache

@@ -6,7 +6,9 @@ without raising. Any exception rolls the whole request back.
 """
 
 from collections.abc import Generator
+from typing import Annotated
 
+from fastapi import Depends
 from sqlalchemy.orm import Session
 
 from database.session import SessionLocal
@@ -22,3 +24,6 @@ def get_db() -> Generator[Session, None, None]:
         raise
     finally:
         session.close()
+
+
+DbSession = Annotated[Session, Depends(get_db)]

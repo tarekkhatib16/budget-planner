@@ -1,43 +1,50 @@
 """Builds the service layer for each request.
 
-Routers depend on these providers instead of constructing services
-themselves, so swapping an implementation (or overriding in tests) is a
-one-line change.
+Data services require CurrentUser, which both protects every route that
+uses them and scopes all queries to the authenticated user.
 """
 
 from typing import Annotated
 
 from fastapi import Depends
-from sqlalchemy.orm import Session
 
-from api.dependencies.database import get_db
+from api.core.config import get_settings
+from api.dependencies.auth import CurrentUser
+from api.dependencies.database import DbSession
 from api.repositories.budget_repository import BudgetRepository
 from api.repositories.category_repository import CategoryRepository
 from api.repositories.expense_repository import ExpenseRepository
+from api.repositories.user_repository import UserRepository
+from api.services.auth_service import AuthService
 from api.services.budget_service import BudgetService
 from api.services.category_service import CategoryService
 from api.services.expense_service import ExpenseService
 from api.services.month_service import MonthService
 
-DbSession = Annotated[Session, Depends(get_db)]
+
+def get_auth_service(db: DbSession) -> AuthService:
+    return AuthService(UserRepository(db), CategoryRepository(db), get_settings())
 
 
-def get_category_service(db: DbSession) -> CategoryService:
-    return CategoryService(CategoryRepository(db))
+def get_category_service(db: DbSession, user: CurrentUser) -> CategoryService:
+    return CategoryService(CategoryRepository(db), user.id)
 
 
-def get_budget_service(db: DbSession) -> BudgetService:
-    return BudgetService(CategoryRepository(db), BudgetRepository(db))
+def get_budget_service(db: DbSession, user: CurrentUser) -> BudgetService:
+    return BudgetService(CategoryRepository(db), BudgetRepository(db), user.id)
 
 
-def get_expense_service(db: DbSession) -> ExpenseService:
-    return ExpenseService(ExpenseRepository(db))
+def get_expense_service(db: DbSession, user: CurrentUser) -> ExpenseService:
+    return ExpenseService(ExpenseRepository(db), user.id)
 
 
-def get_month_service(db: DbSession) -> MonthService:
-    return MonthService(CategoryRepository(db), BudgetRepository(db), ExpenseRepository(db))
+def get_month_service(db: DbSession, user: CurrentUser) -> MonthService:
+    return MonthService(
+        CategoryRepository(db), BudgetRepository(db), ExpenseRepository(db), user.id
+    )
 
 
+AuthServiceDep = Annotated[AuthService, Depends(get_auth_service)]
 CategoryServiceDep = Annotated[CategoryService, Depends(get_category_service)]
 BudgetServiceDep = Annotated[BudgetService, Depends(get_budget_service)]
 ExpenseServiceDep = Annotated[ExpenseService, Depends(get_expense_service)]

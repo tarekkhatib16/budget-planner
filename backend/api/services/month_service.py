@@ -17,18 +17,22 @@ class MonthService:
         categories: CategoryRepository,
         budgets: BudgetRepository,
         expenses: ExpenseRepository,
+        user_id: int,
     ) -> None:
         self._categories = categories
         self._budgets = budgets
         self._expenses = expenses
+        self._user_id = user_id
 
     def get_summary(self, year: int, month: int) -> MonthSummary:
         spending_ids = {
-            c.id for c in self._categories.list_all() if c.group == CategoryGroup.SPENDING
+            c.id
+            for c in self._categories.list_all(self._user_id)
+            if c.group == CategoryGroup.SPENDING
         }
         budget = sum(
             entry.amount_pence
-            for entry in self._budgets.list_for_month(year, month)
+            for entry in self._budgets.list_for_month(self._user_id, year, month)
             if entry.category_id in spending_ids
         )
 
@@ -36,7 +40,7 @@ class MonthService:
         allowances = allocate_allowances(budget, weeks)
 
         expenses_by_week: dict[int, list] = {week.index: [] for week in weeks}
-        for expense in self._expenses.list_between(*month_bounds(year, month)):
+        for expense in self._expenses.list_between(self._user_id, *month_bounds(year, month)):
             expenses_by_week[week_index_for(expense.spend_date)].append(expense)
 
         week_summaries = []

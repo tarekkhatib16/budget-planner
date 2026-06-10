@@ -17,3 +17,7 @@ class NotFoundError(AppError):
 
 class ConflictError(AppError):
     pass
+
+
+class UnauthorizedError(AppError):
+    pass
