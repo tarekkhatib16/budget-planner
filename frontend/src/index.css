@@ -680,9 +680,13 @@ body {
   font-size: 13px;
 }
 
-.week-allowance {
+.week-spent {
   font-weight: 700;
   color: var(--navy-dark);
+}
+
+.week-spent.over {
+  color: var(--red);
 }
 
 .week-stats {

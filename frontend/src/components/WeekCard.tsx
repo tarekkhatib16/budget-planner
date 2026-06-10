@@ -29,11 +29,13 @@ export function WeekCard({ week, isCurrent, onDeleteExpense }: Props) {
           <span className="week-range"> · {formatRange(week.start, week.end)}</span>
           {hasExpenses && <span className="week-count">{week.expenses.length}</span>}
         </h2>
-        <span className="week-allowance">{formatPence(week.allowance_pence)}</span>
+        <span className={week.saved_pence < 0 ? 'week-spent over' : 'week-spent'}>
+          {formatPence(week.spent_pence)}
+        </span>
       </button>
       <div className="week-stats">
         <span>
-          Spent <strong>{formatPence(week.spent_pence)}</strong>
+          Budget <strong>{formatPence(week.allowance_pence)}</strong>
         </span>
         <span className={week.saved_pence < 0 ? 'negative' : 'positive'}>
           {week.saved_pence < 0 ? 'Over by ' : 'Saved '}
