@@ -66,9 +66,9 @@ All endpoints except `/auth/register` and `/auth/login` require an
 frontend/src/
 ├── api/         # fetch client (attaches the JWT) + typed wrappers
 ├── auth/        # AuthContext (login/register/logout) + token storage
-├── components/  # BudgetGrid, BudgetCellInput, WeekCard, ExpenseForm, ErrorNote
+├── components/  # SectionCard, BudgetCellInput, WeekCard, ExpenseForm, ErrorNote
 ├── hooks/       # useAsync (load/reload around fetches)
-├── pages/       # LoginPage, YearPage (budget grid), MonthPage (weekly tracker)
+├── pages/       # LoginPage, BudgetPage (two-month section cards), MonthPage (weekly tracker)
 └── utils/       # money (pence <-> pounds), dates
 ```
 
