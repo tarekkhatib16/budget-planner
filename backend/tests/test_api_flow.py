@@ -81,6 +81,34 @@ def test_updating_a_budget_cell_overwrites_it(client):
     assert groceries_row["amounts_pence"][5] == 25_000
 
 
+def test_copy_forward_replicates_month_across_rest_of_year(client):
+    groceries = _category_id(client, "Groceries")
+    salary = _category_id(client, "Salary")
+    client.put(f"/api/v1/budgets/2026/6/categories/{groceries}", json={"amount_pence": 40_000})
+    client.put(f"/api/v1/budgets/2026/6/categories/{salary}", json={"amount_pence": 412_000})
+    # A pre-existing later value must be overwritten, not merged around.
+    client.put(f"/api/v1/budgets/2026/9/categories/{groceries}", json={"amount_pence": 99_999})
+
+    response = client.post("/api/v1/budgets/2026/6/copy-forward")
+    assert response.status_code == 200
+    assert response.json()["months_filled"] == 6
+
+    view = client.get("/api/v1/budgets/2026").json()
+    spending = next(s for s in view["sections"] if s["group"] == "spending")
+    groceries_row = next(r for r in spending["rows"] if r["category_id"] == groceries)
+    assert groceries_row["amounts_pence"][5:] == [40_000] * 7  # Jun..Dec all match June
+    assert groceries_row["amounts_pence"][:5] == [0] * 5  # Jan..May untouched
+    income = next(s for s in view["sections"] if s["group"] == "income")
+    salary_row = next(r for r in income["rows"] if r["category_id"] == salary)
+    assert salary_row["amounts_pence"][11] == 412_000
+
+
+def test_copy_forward_from_december_fills_nothing(client):
+    response = client.post("/api/v1/budgets/2026/12/copy-forward")
+    assert response.status_code == 200
+    assert response.json()["months_filled"] == 0
+
+
 def test_missing_resources_return_404(client):
     assert client.delete("/api/v1/expenses/999").status_code == 404
     assert (

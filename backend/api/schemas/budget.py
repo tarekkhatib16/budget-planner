@@ -17,6 +17,12 @@ class BudgetEntryRead(BaseModel):
     amount_pence: int
 
 
+class CopyForwardResult(BaseModel):
+    source_year: int
+    source_month: int
+    months_filled: int
+
+
 class CategoryRow(BaseModel):
     """One category with its 12 monthly amounts (index 0 = January)."""
 

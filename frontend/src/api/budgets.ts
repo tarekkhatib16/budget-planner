@@ -15,3 +15,7 @@ export function setBudgetCell(
     amount_pence: amountPence,
   });
 }
+
+export function copyForward(year: number, month: number): Promise<{ months_filled: number }> {
+  return api.post<{ months_filled: number }>(`/budgets/${year}/${month}/copy-forward`, {});
+}

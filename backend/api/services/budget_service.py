@@ -31,6 +31,26 @@ class BudgetService:
             raise NotFoundError(f"Category {category_id} not found")
         return self._budgets.upsert(self._user_id, category_id, year, month, amount_pence)
 
+    def copy_forward(self, year: int, month: int) -> int:
+        """Make every later month of `year` identical to `month`.
+
+        Categories with no amount in the source month are set to zero in the
+        future months too, so the result is a true copy, not a merge.
+        Returns how many months were filled.
+        """
+        categories = self._categories.list_all(self._user_id)
+        amounts = {
+            entry.category_id: entry.amount_pence
+            for entry in self._budgets.list_for_month(self._user_id, year, month)
+        }
+        future_months = range(month + 1, MONTHS_IN_YEAR + 1)
+        for future_month in future_months:
+            for category in categories:
+                self._budgets.upsert(
+                    self._user_id, category.id, year, future_month, amounts.get(category.id, 0)
+                )
+        return len(future_months)
+
     def get_year_view(self, year: int) -> YearView:
         categories = self._categories.list_all(self._user_id)
         amounts = {

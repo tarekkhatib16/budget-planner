@@ -1,6 +1,7 @@
+import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
-import { getYearView, setBudgetCell } from '../api/budgets';
+import { copyForward, getYearView, setBudgetCell } from '../api/budgets';
 import { createCategory, deleteCategory } from '../api/categories';
 import type { CategoryGroup, YearView } from '../api/types';
 import { ErrorNote } from '../components/ErrorNote';
@@ -53,6 +54,27 @@ export function BudgetPage() {
       await setBudgetCell(month.year, month.month, categoryId, amountPence);
     } finally {
       reload(); // re-sync totals (or revert the cell if the save failed)
+    }
+  }
+
+  const [copying, setCopying] = useState(false);
+  const [copyError, setCopyError] = useState<string | null>(null);
+
+  async function handleCopyForward() {
+    const confirmed = window.confirm(
+      `Copy ${monthLabel(first)} amounts to every later month of ${first.year}? ` +
+        'Existing values in those months will be overwritten.',
+    );
+    if (!confirmed) return;
+    setCopying(true);
+    setCopyError(null);
+    try {
+      await copyForward(first.year, first.month);
+      reload();
+    } catch (err) {
+      setCopyError(err instanceof Error ? err.message : 'Copy failed');
+    } finally {
+      setCopying(false);
     }
   }
 
@@ -139,6 +161,18 @@ export function BudgetPage() {
               />
             );
           })}
+
+          {copyError && <ErrorNote message={copyError} />}
+          {first.month < 12 && (
+            <button
+              type="button"
+              className="copy-forward"
+              disabled={copying}
+              onClick={handleCopyForward}
+            >
+              {copying ? 'Copying…' : `Copy ${monthLabel(first)} to rest of ${first.year}`}
+            </button>
+          )}
 
           <section className="section-card savings-card">
             {(['monthly', 'cumulative'] as const).map((kind) => (

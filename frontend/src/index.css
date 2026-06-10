@@ -363,6 +363,24 @@ body {
   margin: 0;
 }
 
+.copy-forward {
+  width: 100%;
+  border: none;
+  background: var(--blue-100);
+  color: var(--navy);
+  font: inherit;
+  font-weight: 600;
+  font-size: 14px;
+  border-radius: var(--radius);
+  padding: 12px;
+  margin: 2px 0 10px;
+  cursor: pointer;
+}
+
+.copy-forward:disabled {
+  opacity: 0.6;
+}
+
 .savings-card .budget-row {
   border-top: none;
 }

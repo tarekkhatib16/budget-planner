@@ -3,7 +3,12 @@ from typing import Annotated
 from fastapi import APIRouter, Path
 
 from api.dependencies.services import BudgetServiceDep
-from api.schemas.budget import BudgetCellUpdate, BudgetEntryRead, YearView
+from api.schemas.budget import (
+    BudgetCellUpdate,
+    BudgetEntryRead,
+    CopyForwardResult,
+    YearView,
+)
 
 router = APIRouter(prefix="/budgets", tags=["budgets"])
 
@@ -25,3 +30,9 @@ def set_budget_amount(
     service: BudgetServiceDep,
 ):
     return service.set_amount(category_id, year, month, payload.amount_pence)
+
+
+@router.post("/{year}/{month}/copy-forward", response_model=CopyForwardResult)
+def copy_forward(year: Year, month: Month, service: BudgetServiceDep):
+    months_filled = service.copy_forward(year, month)
+    return CopyForwardResult(source_year=year, source_month=month, months_filled=months_filled)
