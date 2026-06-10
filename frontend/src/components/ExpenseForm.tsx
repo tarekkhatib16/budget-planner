@@ -3,6 +3,7 @@ import type { FormEvent } from 'react';
 
 import { createExpense } from '../api/expenses';
 import { parsePoundsToPence } from '../utils/money';
+import { DatePicker } from './DatePicker';
 
 interface Props {
   defaultDate: string; // ISO date inside the viewed month
@@ -44,13 +45,7 @@ export function ExpenseForm({ defaultDate, onCreated }: Props) {
   return (
     <form className="expense-form" onSubmit={handleSubmit}>
       <div className="expense-form-fields">
-        <input
-          type="date"
-          aria-label="Date"
-          value={date}
-          onChange={(event) => setDate(event.target.value)}
-          required
-        />
+        <DatePicker value={date} onChange={setDate} />
         <input
           type="text"
           inputMode="decimal"

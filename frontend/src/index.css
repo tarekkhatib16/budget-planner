@@ -290,12 +290,77 @@ body {
 }
 
 .budget-row .name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-weight: 600;
   color: var(--navy-dark);
   font-size: 14px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.row-delete {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 18px;
+  line-height: 1;
+  padding: 4px 6px;
+  margin-left: -6px;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
+.row-delete:hover {
+  color: var(--red);
+}
+
+.add-row {
+  display: flex;
+  gap: 8px;
+  padding: 8px 12px;
+  border-top: 1px solid var(--blue-50);
+}
+
+.add-row input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: var(--blue-50);
+  border-radius: 6px;
+  padding: 8px;
+  font: inherit;
+  /* never below 16px: iOS Safari auto-zooms smaller inputs on focus */
+  font-size: 16px;
+}
+
+.add-row input:focus {
+  outline: 2px solid var(--navy);
+  background: #fff;
+}
+
+.add-row button {
+  border: none;
+  background: var(--navy);
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  font-size: 14px;
+  border-radius: 6px;
+  padding: 8px 14px;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
+.add-row button:disabled {
+  opacity: 0.5;
+}
+
+.section-error {
+  padding: 0 12px 10px;
+  margin: 0;
 }
 
 .savings-card .budget-row {
@@ -403,7 +468,119 @@ body {
   min-width: 0;
 }
 
-.expense-form button {
+/* ---------- date picker ---------- */
+
+.date-picker {
+  position: relative;
+  min-width: 0;
+}
+
+.date-field {
+  width: 100%;
+  border: 1px solid var(--blue-100);
+  border-radius: 8px;
+  padding: 10px;
+  font: inherit;
+  font-size: 16px;
+  background: #fff;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.date-field[aria-expanded='true'] {
+  outline: 2px solid var(--navy);
+}
+
+.calendar-pop {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 30;
+  width: 292px;
+  background: #fff;
+  border-radius: var(--radius);
+  box-shadow: 0 6px 24px rgba(20, 51, 106, 0.28);
+  padding: 12px;
+}
+
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 8px;
+}
+
+.calendar-header button {
+  border: none;
+  background: transparent;
+  color: var(--navy);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.weekday {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  padding: 4px 0;
+}
+
+.day {
+  border: none;
+  background: transparent;
+  font: inherit;
+  font-size: 14px;
+  height: 34px;
+  border-radius: 8px;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.day:hover {
+  background: var(--blue-50);
+}
+
+.day.today {
+  color: var(--navy);
+  font-weight: 700;
+  outline: 1px solid var(--navy);
+  outline-offset: -1px;
+}
+
+.day.selected {
+  background: var(--navy);
+  color: #fff;
+  font-weight: 700;
+}
+
+.calendar-today {
+  width: 100%;
+  margin-top: 8px;
+  border: none;
+  background: var(--blue-100);
+  color: var(--navy);
+  font: inherit;
+  font-weight: 600;
+  font-size: 14px;
+  border-radius: 8px;
+  padding: 8px;
+  cursor: pointer;
+}
+
+.expense-form button[type='submit'] {
   border: none;
   background: var(--navy);
   color: #fff;
@@ -414,7 +591,7 @@ body {
   cursor: pointer;
 }
 
-.expense-form button:disabled {
+.expense-form button[type='submit']:disabled {
   opacity: 0.6;
 }
 

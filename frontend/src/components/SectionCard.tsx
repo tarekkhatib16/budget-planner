@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { FormEvent } from 'react';
 
 import type { CategoryGroup } from '../api/types';
 import { formatPence } from '../utils/money';
@@ -31,15 +32,46 @@ interface Props {
   /** Section total for each visible month. */
   totalsPence: number[];
   onSave: (month: MonthRef, categoryId: number, amountPence: number) => void;
+  onAdd: (name: string) => Promise<void>;
+  onDelete: (row: SectionRow) => Promise<void>;
 }
 
 /**
  * One collapsible budget section. Collapsed it shows just the group totals
  * for the visible months; expanded it reveals each category with editable
- * amounts.
+ * amounts, plus controls to add and remove categories.
  */
-export function SectionCard({ group, rows, months, totalsPence, onSave }: Props) {
+export function SectionCard({ group, rows, months, totalsPence, onSave, onAdd, onDelete }: Props) {
   const [expanded, setExpanded] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleAdd(event: FormEvent) {
+    event.preventDefault();
+    const name = newName.trim();
+    if (!name) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await onAdd(name);
+      setNewName('');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to add category');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleDelete(row: SectionRow) {
+    if (!window.confirm(`Delete "${row.name}" and its budgeted amounts?`)) return;
+    setError(null);
+    try {
+      await onDelete(row);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete category');
+    }
+  }
 
   return (
     <section className="section-card">
@@ -60,19 +92,49 @@ export function SectionCard({ group, rows, months, totalsPence, onSave }: Props)
           </span>
         ))}
       </button>
-      {expanded &&
-        rows.map((row) => (
-          <div key={row.categoryId} className="budget-row">
-            <span className="name">{row.name}</span>
-            {months.map((month, i) => (
-              <BudgetCellInput
-                key={`${month.year}-${month.month}`}
-                valuePence={row.amountsPence[i]}
-                onSave={(pence) => onSave(month, row.categoryId, pence)}
-              />
-            ))}
-          </div>
-        ))}
+      {expanded && (
+        <>
+          {rows.map((row) => (
+            <div key={row.categoryId} className="budget-row">
+              <span className="name">
+                <button
+                  type="button"
+                  className="row-delete"
+                  aria-label={`Delete ${row.name}`}
+                  onClick={() => handleDelete(row)}
+                >
+                  ×
+                </button>
+                {row.name}
+              </span>
+              {months.map((month, i) => (
+                <BudgetCellInput
+                  key={`${month.year}-${month.month}`}
+                  valuePence={row.amountsPence[i]}
+                  onSave={(pence) => onSave(month, row.categoryId, pence)}
+                />
+              ))}
+            </div>
+          ))}
+          <form className="add-row" onSubmit={handleAdd}>
+            <input
+              type="text"
+              aria-label={`New ${GROUP_LABELS[group]} category name`}
+              placeholder="Add category…"
+              maxLength={100}
+              value={newName}
+              onChange={(event) => {
+                setNewName(event.target.value);
+                setError(null);
+              }}
+            />
+            <button type="submit" disabled={busy || !newName.trim()}>
+              Add
+            </button>
+          </form>
+          {error && <p className="form-error section-error">{error}</p>}
+        </>
+      )}
     </section>
   );
 }

@@ -1,6 +1,7 @@
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
 import { getYearView, setBudgetCell } from '../api/budgets';
+import { createCategory, deleteCategory } from '../api/categories';
 import type { CategoryGroup, YearView } from '../api/types';
 import { ErrorNote } from '../components/ErrorNote';
 import { SectionCard } from '../components/SectionCard';
@@ -53,6 +54,16 @@ export function BudgetPage() {
     } finally {
       reload(); // re-sync totals (or revert the cell if the save failed)
     }
+  }
+
+  async function handleAddCategory(group: CategoryGroup, name: string, sortOrder: number) {
+    await createCategory({ name, group, sort_order: sortOrder });
+    reload();
+  }
+
+  async function handleDeleteCategory(categoryId: number) {
+    await deleteCategory(categoryId);
+    reload();
   }
 
   function sectionFor(group: CategoryGroup) {
@@ -123,6 +134,8 @@ export function BudgetPage() {
                 months={months}
                 totalsPence={totals}
                 onSave={handleSave}
+                onAdd={(name) => handleAddCategory(group, name, rows.length)}
+                onDelete={(row) => handleDeleteCategory(row.categoryId)}
               />
             );
           })}
