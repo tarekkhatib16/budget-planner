@@ -52,6 +52,31 @@ cd backend && .venv/bin/python -m pytest tests
 | `GET/POST/DELETE /api/v1/expenses` | Log and remove expenses |
 | `GET/POST/PATCH/DELETE /api/v1/categories` | Manage budget rows |
 
-## Frontend
+## Frontend (React + TypeScript PWA)
 
-TypeScript + React PWA (to be built) in `frontend/`.
+```
+frontend/src/
+├── api/         # fetch client + typed wrappers mirroring the backend schemas
+├── components/  # BudgetGrid, BudgetCellInput, WeekCard, ExpenseForm, ErrorNote
+├── hooks/       # useAsync (load/reload around fetches)
+├── pages/       # YearPage (budget grid), MonthPage (weekly tracker)
+└── utils/       # money (pence <-> pounds), dates
+```
+
+### Run (with the backend running on port 8001)
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Open http://localhost:5173 — `/api` is proxied to the backend. `npm run build`
+type-checks and produces `dist/`.
+
+### Add to iPhone home screen
+
+The dev server listens on the LAN (`host: true`). On an iPhone on the same
+wifi, open `http://<your-mac-ip>:5173` in Safari (find the IP via System
+Settings → Wi-Fi), then Share → **Add to Home Screen**. The manifest makes it
+launch standalone (no Safari chrome) with the £ icon.
