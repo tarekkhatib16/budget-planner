@@ -1,6 +1,7 @@
 import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 
 import { useAuth } from './auth/AuthContext';
+import { LoadingScreen } from './components/LoadingScreen';
 import { BudgetPage } from './pages/BudgetPage';
 import { LoginPage } from './pages/LoginPage';
 import { MonthPage } from './pages/MonthPage';
@@ -20,7 +21,7 @@ export default function App() {
   const { user, initializing, logout } = useAuth();
 
   if (initializing) {
-    return null; // checking the stored token; avoid a login-page flash
+    return <LoadingScreen />;
   }
   if (!user) {
     return <LoginPage />;

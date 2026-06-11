@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 
 import { useAuth } from '../auth/AuthContext';
+import { useSlowOperation } from '../hooks/useSlowOperation';
 
 export function LoginPage() {
   const { login, register } = useAuth();
@@ -10,6 +11,7 @@ export function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const slow = useSlowOperation(busy);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -58,6 +60,11 @@ export function LoginPage() {
         <button type="submit" disabled={busy}>
           {busy ? 'Please wait…' : mode === 'login' ? 'Sign in' : 'Create account'}
         </button>
+        {slow && (
+          <p className="muted login-slow">
+            Waking up the server — this can take up to a minute.
+          </p>
+        )}
         <button
           type="button"
           className="link-button"
