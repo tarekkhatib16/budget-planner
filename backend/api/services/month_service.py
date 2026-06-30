@@ -4,13 +4,14 @@ from api.repositories.category_repository import CategoryRepository
 from api.repositories.expense_repository import ExpenseRepository
 from api.schemas.expense import ExpenseRead
 from api.schemas.month import MonthSummary, WeekSummary
-from api.shared.enums import CategoryGroup
+from api.shared.enums import CategoryGroup, ExpenseKind
 from api.utils.dates import month_bounds
 
 
 class MonthService:
     """Builds the weekly tracker view: the month's SPENDING budget spread
-    across its weeks, with logged expenses bucketed into each week."""
+    across its weeks, with REGULAR expenses bucketed into each week. Unusual
+    expenses are excluded — they have their own view."""
 
     def __init__(
         self,
@@ -40,7 +41,9 @@ class MonthService:
         allowances = allocate_allowances(budget, weeks)
 
         expenses_by_week: dict[int, list] = {week.index: [] for week in weeks}
-        for expense in self._expenses.list_between(self._user_id, *month_bounds(year, month)):
+        for expense in self._expenses.list_between(
+            self._user_id, *month_bounds(year, month), kind=ExpenseKind.REGULAR
+        ):
             expenses_by_week[week_index_for(expense.spend_date)].append(expense)
 
         week_summaries = []

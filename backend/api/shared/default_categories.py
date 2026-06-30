@@ -24,8 +24,6 @@ DEFAULT_CATEGORIES: list[tuple[CategoryGroup, list[str]]] = [
         CategoryGroup.SPENDING,
         ["Groceries", "Eating Out", "Haircut", "Clothing Spend", "Home Spend", "Transport"],
     ),
-    (CategoryGroup.HOLIDAY, ["Accommodation", "Flights/Transportation", "Other Spending"]),
-    (CategoryGroup.DEBT, ["Credit Card Debt"]),
 ]
 
 

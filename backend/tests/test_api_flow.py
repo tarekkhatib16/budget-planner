@@ -109,6 +109,62 @@ def test_copy_forward_from_december_fills_nothing(client):
     assert response.json()["months_filled"] == 0
 
 
+def test_unusual_expenses_are_separate_from_tracker(client):
+    # Set a small spending budget so weekly allowances are non-zero.
+    client.put(
+        f"/api/v1/budgets/2026/6/categories/{_category_id(client, 'Groceries')}",
+        json={"amount_pence": 80_000},
+    )
+    client.post(
+        "/api/v1/expenses",
+        json={"spend_date": "2026-06-03", "amount_pence": 1_250, "description": "Lunch"},
+    )
+    client.post(
+        "/api/v1/expenses",
+        json={
+            "spend_date": "2026-06-10",
+            "amount_pence": 50_000,
+            "description": "Flights",
+            "kind": "unusual",
+        },
+    )
+
+    # The tracker only sees regular expenses.
+    summary = client.get("/api/v1/months/2026/6").json()
+    assert summary["total_spent_pence"] == 1_250
+    assert summary["weeks"][1]["expenses"] == []  # week 2 has only an unusual
+
+    # The expenses endpoint defaults to regular and can be filtered to unusual.
+    regulars = client.get("/api/v1/expenses?year=2026&month=6").json()
+    assert [e["description"] for e in regulars] == ["Lunch"]
+    unusuals = client.get("/api/v1/expenses?year=2026&month=6&kind=unusual").json()
+    assert [e["description"] for e in unusuals] == ["Flights"]
+
+
+def test_year_view_reports_actual_unusual_per_month_and_subtracts_from_savings(client):
+    client.put(
+        f"/api/v1/budgets/2026/6/categories/{_category_id(client, 'Salary')}",
+        json={"amount_pence": 412_000},
+    )
+    client.post(
+        "/api/v1/expenses",
+        json={
+            "spend_date": "2026-06-10",
+            "amount_pence": 50_000,
+            "description": "Flights",
+            "kind": "unusual",
+        },
+    )
+
+    view = client.get("/api/v1/budgets/2026").json()
+    # The Holiday section is gone from the editable grid.
+    assert "holiday" not in {section["group"] for section in view["sections"]}
+    # June (index 5) shows the £500 actual unusual spend.
+    assert view["monthly_unusual_pence"][5] == 50_000
+    # Savings = 412_000 income - 50_000 unusual = 362_000.
+    assert view["monthly_savings_pence"][5] == 412_000 - 50_000
+
+
 def test_missing_resources_return_404(client):
     assert client.delete("/api/v1/expenses/999").status_code == 404
     assert (

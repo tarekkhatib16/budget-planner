@@ -30,15 +30,19 @@ export interface GroupSection {
 export interface YearView {
   year: number;
   sections: GroupSection[];
+  monthly_unusual_pence: number[];
   monthly_savings_pence: number[];
   cumulative_savings_pence: number[];
 }
+
+export type ExpenseKind = 'regular' | 'unusual';
 
 export interface Expense {
   id: number;
   spend_date: string; // ISO date
   amount_pence: number;
   description: string | null;
+  kind: ExpenseKind;
 }
 
 export interface WeekSummary {

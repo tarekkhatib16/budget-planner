@@ -2,6 +2,7 @@ from api.exceptions.errors import NotFoundError
 from api.models import Expense
 from api.repositories.expense_repository import ExpenseRepository
 from api.schemas.expense import ExpenseCreate
+from api.shared.enums import ExpenseKind
 from api.utils.dates import month_bounds
 
 
@@ -10,8 +11,12 @@ class ExpenseService:
         self._expenses = expenses
         self._user_id = user_id
 
-    def list_for_month(self, year: int, month: int) -> list[Expense]:
-        return self._expenses.list_between(self._user_id, *month_bounds(year, month))
+    def list_for_month(
+        self, year: int, month: int, kind: ExpenseKind = ExpenseKind.REGULAR
+    ) -> list[Expense]:
+        return self._expenses.list_between(
+            self._user_id, *month_bounds(year, month), kind=kind
+        )
 
     def create(self, data: ExpenseCreate) -> Expense:
         return self._expenses.add(
@@ -20,6 +25,7 @@ class ExpenseService:
                 spend_date=data.spend_date,
                 amount_pence=data.amount_pence,
                 description=data.description,
+                kind=data.kind,
             )
         )
 

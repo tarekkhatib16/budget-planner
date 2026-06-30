@@ -1,16 +1,23 @@
 from datetime import date
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from api.models import Expense
+from api.shared.enums import ExpenseKind
 
 
 class ExpenseRepository:
     def __init__(self, session: Session) -> None:
         self._session = session
 
-    def list_between(self, user_id: int, start: date, end: date) -> list[Expense]:
+    def list_between(
+        self,
+        user_id: int,
+        start: date,
+        end: date,
+        kind: ExpenseKind | None = None,
+    ) -> list[Expense]:
         stmt = (
             select(Expense)
             .where(
@@ -20,7 +27,27 @@ class ExpenseRepository:
             )
             .order_by(Expense.spend_date, Expense.id)
         )
+        if kind is not None:
+            stmt = stmt.where(Expense.kind == kind)
         return list(self._session.scalars(stmt))
+
+    def monthly_totals(
+        self, user_id: int, year: int, kind: ExpenseKind
+    ) -> dict[int, int]:
+        """Sum of amount_pence per month for one kind over one year."""
+        # extract(month) works on both SQLite and Postgres for Date columns.
+        month_col = func.extract("month", Expense.spend_date)
+        year_col = func.extract("year", Expense.spend_date)
+        stmt = (
+            select(month_col, func.sum(Expense.amount_pence))
+            .where(
+                Expense.user_id == user_id,
+                Expense.kind == kind,
+                year_col == year,
+            )
+            .group_by(month_col)
+        )
+        return {int(month): int(total or 0) for month, total in self._session.execute(stmt)}
 
     def get(self, user_id: int, expense_id: int) -> Expense | None:
         stmt = select(Expense).where(Expense.id == expense_id, Expense.user_id == user_id)

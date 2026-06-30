@@ -4,6 +4,7 @@ from fastapi import APIRouter, Query, status
 
 from api.dependencies.services import ExpenseServiceDep
 from api.schemas.expense import ExpenseCreate, ExpenseRead
+from api.shared.enums import ExpenseKind
 
 router = APIRouter(prefix="/expenses", tags=["expenses"])
 
@@ -13,8 +14,9 @@ def list_expenses(
     year: Annotated[int, Query(ge=2000, le=2100)],
     month: Annotated[int, Query(ge=1, le=12)],
     service: ExpenseServiceDep,
+    kind: ExpenseKind = ExpenseKind.REGULAR,
 ):
-    return service.list_for_month(year, month)
+    return service.list_for_month(year, month, kind=kind)
 
 
 @router.post("", response_model=ExpenseRead, status_code=status.HTTP_201_CREATED)

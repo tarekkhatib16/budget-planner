@@ -31,7 +31,9 @@ def get_category_service(db: DbSession, user: CurrentUser) -> CategoryService:
 
 
 def get_budget_service(db: DbSession, user: CurrentUser) -> BudgetService:
-    return BudgetService(CategoryRepository(db), BudgetRepository(db), user.id)
+    return BudgetService(
+        CategoryRepository(db), BudgetRepository(db), ExpenseRepository(db), user.id
+    )
 
 
 def get_expense_service(db: DbSession, user: CurrentUser) -> ExpenseService:

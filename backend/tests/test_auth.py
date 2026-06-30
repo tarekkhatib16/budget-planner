@@ -13,7 +13,11 @@ def test_register_returns_token_and_default_categories(anon_client):
         "/api/v1/categories", headers={"Authorization": f"Bearer {body['token']}"}
     ).json()
     names = {c["name"] for c in categories}
-    assert {"Salary", "Mortgage", "Groceries", "Credit Card Debt"} <= names
+    assert {"Salary", "Mortgage", "Groceries"} <= names
+    # Holiday and Debt categories are no longer seeded — holidays are
+    # tracked as actuals; debt was removed by the user previously.
+    assert "Accommodation" not in names
+    assert "Credit Card Debt" not in names
 
 
 def test_register_duplicate_email_conflicts(anon_client):

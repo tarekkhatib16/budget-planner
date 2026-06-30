@@ -3,25 +3,31 @@ from api.exceptions.errors import NotFoundError
 from api.models import BudgetEntry
 from api.repositories.budget_repository import BudgetRepository
 from api.repositories.category_repository import CategoryRepository
+from api.repositories.expense_repository import ExpenseRepository
 from api.schemas.budget import CategoryRow, GroupSection, YearView
-from api.shared.enums import CategoryGroup
+from api.shared.enums import CategoryGroup, ExpenseKind
 
-# Display order of the grid sections, matching the spreadsheet layout.
+# Display order of the editable budget sections. HOLIDAY and DEBT are
+# legacy: holidays are now actuals surfaced via monthly_unusual_pence,
+# and debt is no longer tracked here.
 GROUP_ORDER = (
     CategoryGroup.INCOME,
     CategoryGroup.BILLS,
     CategoryGroup.SPENDING,
-    CategoryGroup.HOLIDAY,
-    CategoryGroup.DEBT,
 )
 
 
 class BudgetService:
     def __init__(
-        self, categories: CategoryRepository, budgets: BudgetRepository, user_id: int
+        self,
+        categories: CategoryRepository,
+        budgets: BudgetRepository,
+        expenses: ExpenseRepository,
+        user_id: int,
     ) -> None:
         self._categories = categories
         self._budgets = budgets
+        self._expenses = expenses
         self._user_id = user_id
 
     def set_amount(
@@ -79,10 +85,18 @@ class BudgetService:
             group_totals[group] = totals
             sections.append(GroupSection(group=group, rows=rows, totals_pence=totals))
 
-        savings = monthly_savings(group_totals)
+        unusual_by_month = self._expenses.monthly_totals(
+            self._user_id, year, ExpenseKind.UNUSUAL
+        )
+        monthly_unusual = [
+            unusual_by_month.get(month, 0) for month in range(1, MONTHS_IN_YEAR + 1)
+        ]
+
+        savings = monthly_savings(group_totals, monthly_unusual)
         return YearView(
             year=year,
             sections=sections,
+            monthly_unusual_pence=monthly_unusual,
             monthly_savings_pence=savings,
             cumulative_savings_pence=cumulative_savings(savings),
         )

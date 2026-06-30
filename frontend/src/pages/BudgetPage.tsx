@@ -11,7 +11,7 @@ import { useAsync } from '../hooks/useAsync';
 import { MONTHS_SHORT } from '../utils/dates';
 import { formatPence } from '../utils/money';
 
-const GROUP_ORDER: CategoryGroup[] = ['income', 'bills', 'spending', 'holiday'];
+const EDITABLE_GROUPS: CategoryGroup[] = ['income', 'bills', 'spending'];
 
 function clampMonth(value: number): number {
   return Math.min(12, Math.max(1, value));
@@ -146,7 +146,7 @@ export function BudgetPage() {
             </span>
           </div>
 
-          {GROUP_ORDER.map((group) => {
+          {EDITABLE_GROUPS.map((group) => {
             const { rows, totals } = sectionFor(group);
             return (
               <SectionCard
@@ -161,6 +161,22 @@ export function BudgetPage() {
               />
             );
           })}
+
+          <Link
+            to={`/other/${first.year}/${first.month}`}
+            className="other-summary"
+            aria-label="Open Other Spending"
+          >
+            <span className="section-title">Other Spending</span>
+            {months.map((month) => {
+              const view = data.get(month.year)!;
+              return (
+                <span key={`${month.year}-${month.month}`} className="value">
+                  {formatPence(view.monthly_unusual_pence[month.month - 1])}
+                </span>
+              );
+            })}
+          </Link>
 
           {copyError && <ErrorNote message={copyError} />}
           {first.month < 12 && (

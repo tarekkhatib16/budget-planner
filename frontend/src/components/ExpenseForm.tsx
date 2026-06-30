@@ -2,15 +2,17 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 
 import { createExpense } from '../api/expenses';
+import type { ExpenseKind } from '../api/types';
 import { parsePoundsToPence } from '../utils/money';
 import { DatePicker } from './DatePicker';
 
 interface Props {
   defaultDate: string; // ISO date inside the viewed month
+  kind?: ExpenseKind;
   onCreated: () => void;
 }
 
-export function ExpenseForm({ defaultDate, onCreated }: Props) {
+export function ExpenseForm({ defaultDate, kind = 'regular', onCreated }: Props) {
   const [date, setDate] = useState(defaultDate);
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
@@ -31,6 +33,7 @@ export function ExpenseForm({ defaultDate, onCreated }: Props) {
         spend_date: date,
         amount_pence: pence,
         description: description.trim() || null,
+        kind,
       });
       setAmount('');
       setDescription('');

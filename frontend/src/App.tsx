@@ -5,6 +5,7 @@ import { LoadingScreen } from './components/LoadingScreen';
 import { BudgetPage } from './pages/BudgetPage';
 import { LoginPage } from './pages/LoginPage';
 import { MonthPage } from './pages/MonthPage';
+import { OtherSpendingPage } from './pages/OtherSpendingPage';
 
 function currentMonthPath(): string {
   const now = new Date();
@@ -14,6 +15,11 @@ function currentMonthPath(): string {
 function currentBudgetPath(): string {
   const now = new Date();
   return `/budget/${now.getFullYear()}/${now.getMonth() + 1}`;
+}
+
+function currentOtherPath(): string {
+  const now = new Date();
+  return `/other/${now.getFullYear()}/${now.getMonth() + 1}`;
 }
 
 export default function App() {
@@ -34,6 +40,7 @@ export default function App() {
           <Route path="/" element={<Navigate to={currentMonthPath()} replace />} />
           <Route path="/budget/:year/:month" element={<BudgetPage />} />
           <Route path="/months/:year/:month" element={<MonthPage />} />
+          <Route path="/other/:year/:month" element={<OtherSpendingPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
@@ -49,6 +56,12 @@ export default function App() {
           className={pathname.startsWith('/months') ? 'tab active' : 'tab'}
         >
           Tracker
+        </Link>
+        <Link
+          to={currentOtherPath()}
+          className={pathname.startsWith('/other') ? 'tab active' : 'tab'}
+        >
+          Other
         </Link>
         <button type="button" className="tab tab-signout" onClick={logout}>
           Sign out
