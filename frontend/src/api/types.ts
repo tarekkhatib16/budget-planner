@@ -30,6 +30,7 @@ export interface GroupSection {
 export interface YearView {
   year: number;
   sections: GroupSection[];
+  monthly_overspending_pence: number[];
   monthly_unusual_pence: number[];
   monthly_savings_pence: number[];
   cumulative_savings_pence: number[];

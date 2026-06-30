@@ -11,7 +11,9 @@ import { useAsync } from '../hooks/useAsync';
 import { MONTHS_SHORT } from '../utils/dates';
 import { formatPence } from '../utils/money';
 
-const EDITABLE_GROUPS: CategoryGroup[] = ['income', 'bills', 'spending'];
+// Editable sections rendered above the Spending group. SPENDING itself is
+// rendered inside the group alongside Overspending / Other Spending.
+const SECTIONS_ABOVE_SPENDING: CategoryGroup[] = ['income', 'bills'];
 
 function clampMonth(value: number): number {
   return Math.min(12, Math.max(1, value));
@@ -146,7 +148,7 @@ export function BudgetPage() {
             </span>
           </div>
 
-          {EDITABLE_GROUPS.map((group) => {
+          {SECTIONS_ABOVE_SPENDING.map((group) => {
             const { rows, totals } = sectionFor(group);
             return (
               <SectionCard
@@ -162,21 +164,61 @@ export function BudgetPage() {
             );
           })}
 
-          <Link
-            to={`/other/${first.year}/${first.month}`}
-            className="other-summary"
-            aria-label="Open Other Spending"
-          >
-            <span className="section-title">Other Spending</span>
-            {months.map((month) => {
-              const view = data.get(month.year)!;
+          {/* Spending / Overspending / Other Spending all describe outflows
+              from the same planned-spending bucket, so visually we group
+              them tight (small inner gap) with normal gaps before/after. */}
+          <div className="spending-group">
+            {(() => {
+              const { rows, totals } = sectionFor('spending');
               return (
-                <span key={`${month.year}-${month.month}`} className="value">
-                  {formatPence(view.monthly_unusual_pence[month.month - 1])}
-                </span>
+                <SectionCard
+                  group="spending"
+                  rows={rows}
+                  months={months}
+                  totalsPence={totals}
+                  onSave={handleSave}
+                  onAdd={(name) => handleAddCategory('spending', name, rows.length)}
+                  onDelete={(row) => handleDeleteCategory(row.categoryId)}
+                />
               );
-            })}
-          </Link>
+            })()}
+
+            <Link
+              to={`/months/${first.year}/${first.month}`}
+              className="other-summary"
+              aria-label="Open Tracker to see what was overspent"
+            >
+              <span className="section-title">Overspending</span>
+              {months.map((month) => {
+                const view = data.get(month.year)!;
+                const pence = view.monthly_overspending_pence[month.month - 1];
+                return (
+                  <span
+                    key={`${month.year}-${month.month}`}
+                    className={pence > 0 ? 'value over' : 'value'}
+                  >
+                    {formatPence(pence)}
+                  </span>
+                );
+              })}
+            </Link>
+
+            <Link
+              to={`/other/${first.year}/${first.month}`}
+              className="other-summary"
+              aria-label="Open Other Spending"
+            >
+              <span className="section-title">Other Spending</span>
+              {months.map((month) => {
+                const view = data.get(month.year)!;
+                return (
+                  <span key={`${month.year}-${month.month}`} className="value">
+                    {formatPence(view.monthly_unusual_pence[month.month - 1])}
+                  </span>
+                );
+              })}
+            </Link>
+          </div>
 
           {copyError && <ErrorNote message={copyError} />}
           {first.month < 12 && (

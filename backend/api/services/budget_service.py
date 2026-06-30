@@ -92,10 +92,23 @@ class BudgetService:
             unusual_by_month.get(month, 0) for month in range(1, MONTHS_IN_YEAR + 1)
         ]
 
-        savings = monthly_savings(group_totals, monthly_unusual)
+        # Overspending: how far actual regular spending exceeded the spending
+        # budget per month (clamped at zero — underspending isn't a separate
+        # number, it just shows up as a bigger savings figure).
+        regular_by_month = self._expenses.monthly_totals(
+            self._user_id, year, ExpenseKind.REGULAR
+        )
+        spending_budget = group_totals.get(CategoryGroup.SPENDING, [0] * MONTHS_IN_YEAR)
+        monthly_overspending = [
+            max(0, regular_by_month.get(month, 0) - spending_budget[month - 1])
+            for month in range(1, MONTHS_IN_YEAR + 1)
+        ]
+
+        savings = monthly_savings(group_totals, monthly_overspending, monthly_unusual)
         return YearView(
             year=year,
             sections=sections,
+            monthly_overspending_pence=monthly_overspending,
             monthly_unusual_pence=monthly_unusual,
             monthly_savings_pence=savings,
             cumulative_savings_pence=cumulative_savings(savings),

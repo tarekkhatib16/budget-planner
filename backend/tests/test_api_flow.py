@@ -165,6 +165,45 @@ def test_year_view_reports_actual_unusual_per_month_and_subtracts_from_savings(c
     assert view["monthly_savings_pence"][5] == 412_000 - 50_000
 
 
+def test_overspending_reflects_actual_spend_above_budget(client):
+    client.put(
+        f"/api/v1/budgets/2026/6/categories/{_category_id(client, 'Salary')}",
+        json={"amount_pence": 200_000},
+    )
+    client.put(
+        f"/api/v1/budgets/2026/6/categories/{_category_id(client, 'Groceries')}",
+        json={"amount_pence": 50_000},
+    )
+    # Total regular spend in June: £581. Budget: £500. Overspend: £81.
+    for amount in (40_000, 18_100):
+        client.post(
+            "/api/v1/expenses",
+            json={"spend_date": "2026-06-05", "amount_pence": amount},
+        )
+
+    view = client.get("/api/v1/budgets/2026").json()
+    assert view["monthly_overspending_pence"][5] == 8_100
+    # July had no spending so no overspending either.
+    assert view["monthly_overspending_pence"][6] == 0
+    # Savings: 200_000 (income) - 50_000 (spending budget) - 8_100 (overspend)
+    #        = 141_900.
+    assert view["monthly_savings_pence"][5] == 141_900
+
+
+def test_underspending_does_not_create_overspending(client):
+    client.put(
+        f"/api/v1/budgets/2026/6/categories/{_category_id(client, 'Groceries')}",
+        json={"amount_pence": 50_000},
+    )
+    client.post(
+        "/api/v1/expenses",
+        json={"spend_date": "2026-06-05", "amount_pence": 10_000},
+    )
+
+    view = client.get("/api/v1/budgets/2026").json()
+    assert view["monthly_overspending_pence"][5] == 0
+
+
 def test_missing_resources_return_404(client):
     assert client.delete("/api/v1/expenses/999").status_code == 404
     assert (

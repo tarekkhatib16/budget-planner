@@ -42,8 +42,11 @@ class GroupSection(BaseModel):
 class YearView(BaseModel):
     year: int
     sections: list[GroupSection]
-    # Actual unusual expenses summed per month (one-off costs like holidays
-    # that aren't planned in a category but reduce monthly savings).
+    # Per month: how much actual REGULAR spending exceeded the SPENDING
+    # budget by. Zero when on or under budget.
+    monthly_overspending_pence: list[int]
+    # Actual UNUSUAL expenses summed per month (one-off costs like
+    # holidays — not budgeted, but reduce monthly savings).
     monthly_unusual_pence: list[int]
     monthly_savings_pence: list[int]
     cumulative_savings_pence: list[int]

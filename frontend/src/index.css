@@ -443,6 +443,30 @@ body {
   opacity: 0.6;
 }
 
+/* Spending + Overspending + Other Spending merge into one big pill: a
+   single rounded container with one shadow. Inner cards lose their own
+   rounding/shadow so they sit flush; a faint white hairline keeps each
+   section header distinguishable from the next. */
+.spending-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 10px;
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(20, 51, 106, 0.12);
+}
+
+.spending-group > .section-card,
+.spending-group > .other-summary {
+  margin-bottom: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.spending-group > * + * {
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+}
+
 /* Same shape as a collapsed SectionCard header but read-only and clickable
    as a single link — it navigates to the Other Spending tab. */
 .other-summary {
@@ -468,6 +492,13 @@ body {
   text-align: right;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+}
+
+/* Non-zero overspending gets the warm "over" colour so it stands out
+   against the navy. Zero stays the default white so empty months look
+   clean. */
+.other-summary .value.over {
+  color: #ffb4a8;
 }
 
 .expense-list.flat {
