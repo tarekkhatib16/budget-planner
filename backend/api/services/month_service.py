@@ -3,7 +3,7 @@ from api.repositories.budget_repository import BudgetRepository
 from api.repositories.category_repository import CategoryRepository
 from api.repositories.expense_repository import ExpenseRepository
 from api.schemas.expense import ExpenseRead
-from api.schemas.month import MonthSummary, WeekSummary
+from api.schemas.month import CategoryBreakdownItem, MonthSummary, WeekSummary
 from api.shared.enums import CategoryGroup, ExpenseKind
 from api.utils.dates import month_bounds
 
@@ -26,11 +26,9 @@ class MonthService:
         self._user_id = user_id
 
     def get_summary(self, year: int, month: int) -> MonthSummary:
-        spending_ids = {
-            c.id
-            for c in self._categories.list_all(self._user_id)
-            if c.group == CategoryGroup.SPENDING
-        }
+        categories = self._categories.list_all(self._user_id)
+        spending_categories = [c for c in categories if c.group == CategoryGroup.SPENDING]
+        spending_ids = {c.id for c in spending_categories}
         budget = sum(
             entry.amount_pence
             for entry in self._budgets.list_for_month(self._user_id, year, month)
@@ -64,6 +62,26 @@ class MonthService:
             )
 
         total_spent = sum(w.spent_pence for w in week_summaries)
+
+        # Per-category breakdown for the pie chart. Sort_order matches the
+        # Budget tab so colours stay consistent there too.
+        category_totals = self._expenses.category_totals_for_month(
+            self._user_id, year, month
+        )
+        category_breakdown = [
+            CategoryBreakdownItem(
+                category_id=c.id, name=c.name, amount_pence=category_totals.get(c.id, 0)
+            )
+            for c in spending_categories
+        ]
+        uncategorised = category_totals.get(None, 0)
+        if uncategorised:
+            category_breakdown.append(
+                CategoryBreakdownItem(
+                    category_id=None, name="Uncategorised", amount_pence=uncategorised
+                )
+            )
+
         return MonthSummary(
             year=year,
             month=month,
@@ -71,4 +89,5 @@ class MonthService:
             total_spent_pence=total_spent,
             total_saved_pence=budget - total_spent,
             weeks=week_summaries,
+            category_breakdown=category_breakdown,
         )

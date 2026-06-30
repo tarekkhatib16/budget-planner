@@ -6,6 +6,7 @@ export interface ExpenseCreate {
   amount_pence: number;
   description?: string | null;
   kind?: ExpenseKind;
+  category_id?: number | null;
 }
 
 export function listExpenses(

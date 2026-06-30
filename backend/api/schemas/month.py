@@ -15,6 +15,16 @@ class WeekSummary(BaseModel):
     expenses: list[ExpenseRead]
 
 
+class CategoryBreakdownItem(BaseModel):
+    """How much was spent on one Spending category this month. category_id
+    is None for the "uncategorised" bucket — REGULAR expenses logged without
+    a category assignment."""
+
+    category_id: int | None
+    name: str
+    amount_pence: int
+
+
 class MonthSummary(BaseModel):
     year: int
     month: int
@@ -22,3 +32,4 @@ class MonthSummary(BaseModel):
     total_spent_pence: int
     total_saved_pence: int
     weeks: list[WeekSummary]
+    category_breakdown: list[CategoryBreakdownItem]

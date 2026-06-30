@@ -191,7 +191,9 @@ export function BudgetPage() {
               <span className="section-title">Overspending</span>
               {months.map((month) => {
                 const view = data.get(month.year)!;
-                const pence = view.monthly_overspending_pence[month.month - 1];
+                // ?? 0 so a stale backend (without monthly_overspending_pence
+                // in its response) can't crash the page mid-deploy.
+                const pence = view.monthly_overspending_pence?.[month.month - 1] ?? 0;
                 return (
                   <span
                     key={`${month.year}-${month.month}`}
@@ -211,9 +213,10 @@ export function BudgetPage() {
               <span className="section-title">Other Spending</span>
               {months.map((month) => {
                 const view = data.get(month.year)!;
+                const pence = view.monthly_unusual_pence?.[month.month - 1] ?? 0;
                 return (
                   <span key={`${month.year}-${month.month}`} className="value">
-                    {formatPence(view.monthly_unusual_pence[month.month - 1])}
+                    {formatPence(pence)}
                   </span>
                 );
               })}

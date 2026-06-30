@@ -610,7 +610,8 @@ body {
   grid-column: 1 / 2;
 }
 
-.expense-form input {
+.expense-form input,
+.expense-form select {
   border: 1px solid var(--blue-100);
   border-radius: 8px;
   padding: 10px;
@@ -618,6 +619,63 @@ body {
   /* never below 16px: iOS Safari auto-zooms smaller inputs on focus */
   font-size: 16px;
   min-width: 0;
+  background: #fff;
+  color: var(--ink);
+}
+
+/* ---------- pie chart ---------- */
+
+.pie-chart {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #fff;
+  border-radius: var(--radius);
+  box-shadow: 0 1px 3px rgba(20, 51, 106, 0.12);
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+.pie-chart svg {
+  flex: 0 0 auto;
+}
+
+.pie-legend {
+  flex: 1;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  min-width: 0;
+}
+
+.pie-legend li {
+  display: grid;
+  grid-template-columns: 10px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.pie-legend .swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.pie-legend .legend-name {
+  color: var(--navy-dark);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pie-legend .legend-amount {
+  color: var(--ink);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
 
 /* ---------- date picker ---------- */

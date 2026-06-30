@@ -2,20 +2,24 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 
 import { createExpense } from '../api/expenses';
-import type { ExpenseKind } from '../api/types';
+import type { Category, ExpenseKind } from '../api/types';
 import { parsePoundsToPence } from '../utils/money';
 import { DatePicker } from './DatePicker';
 
 interface Props {
   defaultDate: string; // ISO date inside the viewed month
   kind?: ExpenseKind;
+  /** Categories the user can pick from. Omit to hide the dropdown
+   *  (used by the Other Spending tab). */
+  categories?: Category[];
   onCreated: () => void;
 }
 
-export function ExpenseForm({ defaultDate, kind = 'regular', onCreated }: Props) {
+export function ExpenseForm({ defaultDate, kind = 'regular', categories, onCreated }: Props) {
   const [date, setDate] = useState(defaultDate);
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
+  const [categoryId, setCategoryId] = useState<string>(''); // '' = uncategorised
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -34,9 +38,12 @@ export function ExpenseForm({ defaultDate, kind = 'regular', onCreated }: Props)
         amount_pence: pence,
         description: description.trim() || null,
         kind,
+        category_id: categoryId ? Number(categoryId) : null,
       });
       setAmount('');
       setDescription('');
+      // Keep the category sticky between adds — most users log several in a
+      // row from the same category (e.g. a few Groceries entries).
       onCreated();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save expense');
@@ -58,6 +65,20 @@ export function ExpenseForm({ defaultDate, kind = 'regular', onCreated }: Props)
           onChange={(event) => setAmount(event.target.value)}
           required
         />
+        {categories && (
+          <select
+            aria-label="Category"
+            value={categoryId}
+            onChange={(event) => setCategoryId(event.target.value)}
+          >
+            <option value="">Uncategorised</option>
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
+              </option>
+            ))}
+          </select>
+        )}
         <input
           type="text"
           aria-label="Description"

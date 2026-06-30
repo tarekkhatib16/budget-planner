@@ -31,6 +31,31 @@ class ExpenseRepository:
             stmt = stmt.where(Expense.kind == kind)
         return list(self._session.scalars(stmt))
 
+    def category_totals_for_month(
+        self, user_id: int, year: int, month: int
+    ) -> dict[int | None, int]:
+        """Sum of REGULAR expense amounts grouped by category for one month.
+
+        Returns {category_id (or None for uncategorised): amount_pence}.
+        """
+        from api.utils.dates import month_bounds
+
+        start, end = month_bounds(year, month)
+        stmt = (
+            select(Expense.category_id, func.sum(Expense.amount_pence))
+            .where(
+                Expense.user_id == user_id,
+                Expense.kind == ExpenseKind.REGULAR,
+                Expense.spend_date >= start,
+                Expense.spend_date <= end,
+            )
+            .group_by(Expense.category_id)
+        )
+        return {
+            (int(cat_id) if cat_id is not None else None): int(total or 0)
+            for cat_id, total in self._session.execute(stmt)
+        }
+
     def monthly_totals(
         self, user_id: int, year: int, kind: ExpenseKind
     ) -> dict[int, int]:

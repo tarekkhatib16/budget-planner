@@ -10,6 +10,7 @@ class ExpenseCreate(BaseModel):
     amount_pence: int = Field(gt=0)
     description: str | None = Field(default=None, max_length=255)
     kind: ExpenseKind = ExpenseKind.REGULAR
+    category_id: int | None = None
 
 
 class ExpenseRead(BaseModel):
@@ -20,3 +21,4 @@ class ExpenseRead(BaseModel):
     amount_pence: int
     description: str | None
     kind: ExpenseKind
+    category_id: int | None

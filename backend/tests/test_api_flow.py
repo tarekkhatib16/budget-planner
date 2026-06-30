@@ -204,6 +204,65 @@ def test_underspending_does_not_create_overspending(client):
     assert view["monthly_overspending_pence"][5] == 0
 
 
+def test_month_summary_breaks_down_spending_by_category(client):
+    groceries_id = _category_id(client, "Groceries")
+    eating_out_id = _category_id(client, "Eating Out")
+    client.post(
+        "/api/v1/expenses",
+        json={"spend_date": "2026-06-05", "amount_pence": 4_000, "category_id": groceries_id},
+    )
+    client.post(
+        "/api/v1/expenses",
+        json={"spend_date": "2026-06-05", "amount_pence": 1_500, "category_id": eating_out_id},
+    )
+    client.post(
+        "/api/v1/expenses",
+        json={"spend_date": "2026-06-05", "amount_pence": 800},  # uncategorised
+    )
+
+    summary = client.get("/api/v1/months/2026/6").json()
+    breakdown = {item["name"]: item["amount_pence"] for item in summary["category_breakdown"]}
+    assert breakdown["Groceries"] == 4_000
+    assert breakdown["Eating Out"] == 1_500
+    assert breakdown["Uncategorised"] == 800
+    # Categories with zero spend still appear (so the UI gets stable colours);
+    # only uncategorised is conditional.
+    assert breakdown["Haircut"] == 0
+
+
+def test_categorising_into_non_spending_group_is_rejected(client):
+    salary_id = _category_id(client, "Salary")
+    response = client.post(
+        "/api/v1/expenses",
+        json={"spend_date": "2026-06-05", "amount_pence": 1_000, "category_id": salary_id},
+    )
+    assert response.status_code == 400
+    assert "Spending" in response.json()["detail"]
+
+
+def test_unknown_category_id_returns_404(client):
+    response = client.post(
+        "/api/v1/expenses",
+        json={"spend_date": "2026-06-05", "amount_pence": 1_000, "category_id": 99999},
+    )
+    assert response.status_code == 404
+
+
+def test_deleting_a_category_keeps_its_past_expenses_as_uncategorised(client):
+    haircut_id = _category_id(client, "Haircut")
+    client.post(
+        "/api/v1/expenses",
+        json={"spend_date": "2026-06-05", "amount_pence": 2_500, "category_id": haircut_id},
+    )
+    assert client.delete(f"/api/v1/categories/{haircut_id}").status_code == 204
+
+    summary = client.get("/api/v1/months/2026/6").json()
+    breakdown = {item["name"]: item["amount_pence"] for item in summary["category_breakdown"]}
+    # The Haircut row is gone but the £25 expense survives as uncategorised.
+    assert "Haircut" not in breakdown
+    assert breakdown["Uncategorised"] == 2_500
+
+
 def test_missing_resources_return_404(client):
     assert client.delete("/api/v1/expenses/999").status_code == 404
     assert (

@@ -44,6 +44,13 @@ export interface Expense {
   amount_pence: number;
   description: string | null;
   kind: ExpenseKind;
+  category_id: number | null;
+}
+
+export interface CategoryBreakdownItem {
+  category_id: number | null;
+  name: string;
+  amount_pence: number;
 }
 
 export interface WeekSummary {
@@ -63,4 +70,5 @@ export interface MonthSummary {
   total_spent_pence: number;
   total_saved_pence: number;
   weeks: WeekSummary[];
+  category_breakdown: CategoryBreakdownItem[];
 }
