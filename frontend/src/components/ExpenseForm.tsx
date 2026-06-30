@@ -4,6 +4,7 @@ import type { FormEvent } from 'react';
 import { createExpense } from '../api/expenses';
 import type { Category, ExpenseKind } from '../api/types';
 import { parsePoundsToPence } from '../utils/money';
+import { CategorySelect } from './CategorySelect';
 import { DatePicker } from './DatePicker';
 
 interface Props {
@@ -19,7 +20,7 @@ export function ExpenseForm({ defaultDate, kind = 'regular', categories, onCreat
   const [date, setDate] = useState(defaultDate);
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
-  const [categoryId, setCategoryId] = useState<string>(''); // '' = uncategorised
+  const [categoryId, setCategoryId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -38,7 +39,7 @@ export function ExpenseForm({ defaultDate, kind = 'regular', categories, onCreat
         amount_pence: pence,
         description: description.trim() || null,
         kind,
-        category_id: categoryId ? Number(categoryId) : null,
+        category_id: categoryId,
       });
       setAmount('');
       setDescription('');
@@ -66,18 +67,11 @@ export function ExpenseForm({ defaultDate, kind = 'regular', categories, onCreat
           required
         />
         {categories && (
-          <select
-            aria-label="Category"
+          <CategorySelect
+            categories={categories}
             value={categoryId}
-            onChange={(event) => setCategoryId(event.target.value)}
-          >
-            <option value="">Uncategorised</option>
-            {categories.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name}
-              </option>
-            ))}
-          </select>
+            onChange={setCategoryId}
+          />
         )}
         <input
           type="text"
