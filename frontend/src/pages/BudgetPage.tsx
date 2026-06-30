@@ -38,13 +38,23 @@ export function BudgetPage() {
   };
   const months = [first, addMonths(first, 1)];
 
-  // The API serves whole years; a Dec/Jan window needs two of them.
-  const years = [...new Set(months.map((ref) => ref.year))];
+  // Prefetch ±1 year on every fetch. Going forward (Dec→Jan) or backward
+  // (Jan→Dec) one step always has the data ready in the stale Map, so
+  // useAsync's previous-data-during-refetch behaviour now covers the
+  // year-boundary cases too — no "Loading…" flash for normal navigation.
+  // Deps are [first.year] only: month changes within a year don't refetch.
+  const fetchYears = [first.year - 1, first.year, first.year + 1];
+  const visibleYears = [...new Set(months.map((ref) => ref.year))];
   const { data, loading, error, reload } = useAsync(async () => {
-    const views = await Promise.all(years.map((y) => getYearView(y)));
+    const views = await Promise.all(fetchYears.map((y) => getYearView(y)));
     return new Map<number, YearView>(views.map((view) => [view.year, view]));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [first.year, first.month]);
+  }, [first.year]);
+
+  // Belt-and-braces: only render the budget content once every *visible*
+  // year is in the Map. Any future jump beyond ±1 year (e.g. typing a URL
+  // 4 years away) shows a brief loading state instead of crashing.
+  const dataReady = !!data && visibleYears.every((y) => data.has(y));
 
   function shiftMonth(delta: number) {
     const next = addMonths(first, delta);
@@ -124,9 +134,9 @@ export function BudgetPage() {
       </header>
 
       {error && <ErrorNote message={error} onRetry={reload} />}
-      {!data && loading && <p className="muted">Loading…</p>}
+      {!dataReady && loading && <p className="muted">Loading…</p>}
 
-      {data && (
+      {dataReady && data && (
         <>
           <div className="month-columns">
             <span />
